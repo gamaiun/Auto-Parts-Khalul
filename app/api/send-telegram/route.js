@@ -1,9 +1,27 @@
 export async function POST(request) {
   try {
-    const { vehicleInfo, part, phone } = await request.json();
+    const { vehicleInfo, part, phone, plateNumber } = await request.json();
 
     // Format the message
     const message = `🚗 *New Auto Parts Request*\n\n*Vehicle Information:*\n${vehicleInfo}\n\n*Part Requested:* ${part}\n*Customer Phone:* ${phone}`;
+
+    // Store order in memory for dashboard
+    await fetch(
+      `${
+        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3002"
+      }/api/get-orders`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vehicleInfo,
+          part,
+          phone,
+          plateNumber,
+          timestamp: new Date().toISOString(),
+        }),
+      }
+    ).catch((err) => console.error("Failed to store order:", err));
 
     // Telegram Bot Token and Chat ID (from environment variables)
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;

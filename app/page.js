@@ -31,7 +31,36 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
 
-  const sendTelegramMessage = async (vehicleInfo, part, phone) => {
+  const playNotificationSound = () => {
+    // Create a simple notification sound using Web Audio API
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
+
+    // Create oscillator for a pleasant notification sound
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Set frequency for a pleasant "ding" sound
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+
+    // Set volume envelope (fade in and out)
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.3
+    );
+
+    // Play the sound
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  };
+
+  const sendTelegramMessage = async (vehicleInfo, part, phone, plateNumber) => {
     try {
       const response = await fetch("/api/send-telegram", {
         method: "POST",
@@ -42,6 +71,7 @@ export default function Home() {
           vehicleInfo,
           part,
           phone,
+          plateNumber,
         }),
       });
 
@@ -50,6 +80,7 @@ export default function Home() {
       if (!data.success) {
         console.error("Failed to send Telegram:", data.error);
       }
+      // Sound removed from customer side - plays only on dashboard
 
       return data.success;
     } catch (error) {
@@ -226,7 +257,8 @@ export default function Home() {
       const sent = await sendTelegramMessage(
         vehicleData,
         partRequested,
-        userInput
+        userInput,
+        plateNumber
       );
 
       // Confirm the order
