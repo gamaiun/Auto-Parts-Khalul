@@ -39,9 +39,10 @@ export default function Navigation() {
     <div className={styles.wrapper}>
       <Link href="/">
         <div className={styles.logoContainer}>
-          <h1 className={styles.headerTitle}>Khalul Brothers</h1>
-          <p className={styles.subtitle}>AUTO-PARTS</p>
-          <p className={styles.tagline}>since 1991</p>
+          <div className={styles.textContainer}>
+            <h1 className={styles.subtitleBebas}>KHALUL AUTO-PARTS</h1>
+            <p className={styles.taglineBebas}>SINCE 1991</p>
+          </div>
         </div>
       </Link>
       <div ref={ref} className={styles.fixedMenu}>

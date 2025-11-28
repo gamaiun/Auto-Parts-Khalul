@@ -7,7 +7,7 @@ export default function Home() {
   const [messages, setMessages] = useState([
     {
       id: 0,
-      text: "יש לנו למעלה ממיליון חלקי חילוף במלאי. בוא נמצא את החלק שאתה צריך.\n\nמה מספר הרכב שעבורו נדרש החלק?",
+      text: "עם למעלה ממיליון חלקי חילוף במלאי, רוב הסיכויים, שיש לנו את מה שאתה מחפש.\n\nמה מספר הרכב החולה?",
       sender: "bot",
     },
   ]);
@@ -18,6 +18,8 @@ export default function Home() {
   const [vehicleObject, setVehicleObject] = useState(null);
   const [partRequested, setPartRequested] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 minutes in seconds
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -27,6 +29,15 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (showCountdown && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [showCountdown, timeLeft]);
 
   const playNotificationSound = () => {
     // Create a simple notification sound using Web Audio API
@@ -141,15 +152,15 @@ export default function Home() {
     console.log("Vehicle data:", vehicle);
     console.log("All vehicle fields:", Object.keys(vehicle));
 
-    let info = `מידע על הרכב:\n\n`;
+    let info = ``;
 
     if (vehicle.mispar_rechev)
-      info += `📋 Plate Number: ${vehicle.mispar_rechev}\n`;
-    if (vehicle.tozeret_nm) info += `🏭 Manufacturer: ${vehicle.tozeret_nm}\n`;
-    if (vehicle.kinuy_mishari) info += `🚙 Model: ${vehicle.kinuy_mishari}\n`;
-    if (vehicle.shnat_yitzur) info += `📅 Year: ${vehicle.shnat_yitzur}\n`;
-    if (vehicle.degem_nm) info += `🔧 Version: ${vehicle.degem_nm}\n`;
-    if (vehicle.sug_delek_nm) info += `⛽ Fuel Type: ${vehicle.sug_delek_nm}\n`;
+      info += `Plate Number: ${vehicle.mispar_rechev}\n`;
+    if (vehicle.tozeret_nm) info += `Manufacturer: ${vehicle.tozeret_nm}\n`;
+    if (vehicle.kinuy_mishari) info += `Model: ${vehicle.kinuy_mishari}\n`;
+    if (vehicle.shnat_yitzur) info += `Year: ${vehicle.shnat_yitzur}\n`;
+    if (vehicle.degem_nm) info += `Version: ${vehicle.degem_nm}\n`;
+    if (vehicle.sug_delek_nm) info += `Fuel Type: ${vehicle.sug_delek_nm}\n`;
 
     return info.trim();
   };
@@ -196,6 +207,7 @@ export default function Home() {
             id: Date.now() + 2,
             text: result.info,
             sender: "bot",
+            isVehicleInfo: true,
           },
         ];
       });
@@ -247,11 +259,13 @@ export default function Home() {
           ...prev,
           {
             id: Date.now() + 1,
-            text: `מצויין!\nאנחנו מחפשים ${partRequested} עבור ${manufacturer}, ${model}, ${year}\n\nההזמנה נשלחה לחנות, ניצור איתך קשר בעשרים דקות הקרובות`,
+            text: `מצויין!\nברגע זה ממש המחסנאים שלנו הלכו לחפש ${partRequested} עבור ${manufacturer}, ${model}, ${year}.\n\nניצור איתך קשר טלפוני תוך עשרים דקות`,
             sender: "bot",
           },
         ]);
         setConversationState("COMPLETE");
+        setShowCountdown(true);
+        setTimeLeft(20 * 60); // Reset to 20 minutes
       }, 500);
     }
   };
@@ -277,13 +291,25 @@ export default function Home() {
             <div className={styles.messageContent}>
               <p
                 className={styles.messageText}
-                style={{ whiteSpace: "pre-line" }}
+                style={{
+                  whiteSpace: "pre-line",
+                  direction: message.isVehicleInfo ? "ltr" : "rtl",
+                  textAlign: message.isVehicleInfo ? "left" : "right",
+                }}
               >
                 {message.text}
               </p>
             </div>
           </div>
         ))}
+        {showCountdown && (
+          <div className={styles.countdownContainer}>
+            <div className={styles.countdown}>
+              {Math.floor(timeLeft / 60)}:
+              {String(timeLeft % 60).padStart(2, "0")}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
