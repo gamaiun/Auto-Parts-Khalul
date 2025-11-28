@@ -7,18 +7,15 @@ export default function Home() {
   const [messages, setMessages] = useState([
     {
       id: 0,
-      text: "Enter your plate number",
+      text: "יש לנו למעלה ממיליון חלקי חילוף במלאי. בוא נמצא את החלק שאתה צריך.\n\nמה מספר הרכב שעבורו נדרש החלק?",
       sender: "bot",
-      timestamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
     },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationState, setConversationState] = useState("WAITING_PLATE"); // WAITING_PLATE, WAITING_PART, WAITING_PHONE, COMPLETE
   const [vehicleData, setVehicleData] = useState(null);
+  const [vehicleObject, setVehicleObject] = useState(null);
   const [partRequested, setPartRequested] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
   const messagesEndRef = useRef(null);
@@ -122,13 +119,19 @@ export default function Home() {
               v.mispar_rechev.toString() === plateNumber.toString()
           ) || data.result.records[0];
 
-        return formatVehicleInfo(vehicle);
+        return { vehicle, info: formatVehicleInfo(vehicle) };
       } else {
-        return `❌ Sorry, no vehicle found with plate number: ${plateNumber}\n\nPlease check the number and try again.`;
+        return {
+          vehicle: null,
+          info: `❌ Sorry, no vehicle found with plate number: ${plateNumber}\n\nPlease check the number and try again.`,
+        };
       }
     } catch (error) {
       console.error("API Error:", error);
-      return `⚠️ Error fetching vehicle data: ${error.message}\n\nPlease try again later.`;
+      return {
+        vehicle: null,
+        info: `⚠️ Error fetching vehicle data: ${error.message}\n\nPlease try again later.`,
+      };
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +141,7 @@ export default function Home() {
     console.log("Vehicle data:", vehicle);
     console.log("All vehicle fields:", Object.keys(vehicle));
 
-    let info = `🚗 Vehicle Information:\n\n`;
+    let info = `מידע על הרכב:\n\n`;
 
     if (vehicle.mispar_rechev)
       info += `📋 Plate Number: ${vehicle.mispar_rechev}\n`;
@@ -146,16 +149,7 @@ export default function Home() {
     if (vehicle.kinuy_mishari) info += `🚙 Model: ${vehicle.kinuy_mishari}\n`;
     if (vehicle.shnat_yitzur) info += `📅 Year: ${vehicle.shnat_yitzur}\n`;
     if (vehicle.degem_nm) info += `🔧 Version: ${vehicle.degem_nm}\n`;
-    if (vehicle.tzeva_rechev) info += `🎨 Color: ${vehicle.tzeva_rechev}\n`;
-    if (vehicle.ramat_gimur) info += `⭐ Trim Level: ${vehicle.ramat_gimur}\n`;
-    if (vehicle.ramat_eivzur_betihuty)
-      info += `🛡️ Safety Rating: ${vehicle.ramat_eivzur_betihuty}\n`;
     if (vehicle.sug_delek_nm) info += `⛽ Fuel Type: ${vehicle.sug_delek_nm}\n`;
-    if (vehicle.horaat_rishum)
-      info += `📝 Registration: ${vehicle.horaat_rishum}\n`;
-    if (vehicle.mivchan_acharon_dt)
-      info += `🔍 Last Inspection: ${vehicle.mivchan_acharon_dt}\n`;
-    if (vehicle.tokef_dt) info += `📅 Valid Until: ${vehicle.tokef_dt}\n`;
 
     return info.trim();
   };
@@ -163,41 +157,35 @@ export default function Home() {
   const handleSend = async () => {
     if (inputValue.trim() === "") return;
 
+    const userInput = inputValue.trim();
+    setInputValue("");
+
     // Add user message
     const userMessage = {
       id: Date.now(),
-      text: inputValue,
+      text: userInput,
       sender: "user",
-      timestamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const userInput = inputValue.trim();
-    setInputValue("");
 
     // Handle based on conversation state
     if (conversationState === "WAITING_PLATE") {
       // Show loading message
       const loadingMessage = {
         id: Date.now() + 1,
-        text: "🔍 Searching for vehicle data...",
+        text: "🔍 מחפש מידע על הרכב...",
         sender: "bot",
-        timestamp: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
       };
       setMessages((prev) => [...prev, loadingMessage]);
 
       // Fetch vehicle data
-      const vehicleInfo = await fetchVehicleData(userInput);
+      const result = await fetchVehicleData(userInput);
 
       // Store plate number and vehicle data
       setPlateNumber(userInput);
-      setVehicleData(vehicleInfo);
+      setVehicleData(result.info);
+      setVehicleObject(result.vehicle);
 
       // Replace loading message with actual data
       setMessages((prev) => {
@@ -206,12 +194,8 @@ export default function Home() {
           ...filtered,
           {
             id: Date.now() + 2,
-            text: vehicleInfo,
+            text: result.info,
             sender: "bot",
-            timestamp: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
           },
         ];
       });
@@ -222,12 +206,8 @@ export default function Home() {
           ...prev,
           {
             id: Date.now() + 3,
-            text: "What part do you need?",
+            text: "איזה חלק אנחנו מחפשים? (מוט הגה, בלמים או משהו אחר?)",
             sender: "bot",
-            timestamp: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
           },
         ]);
         setConversationState("WAITING_PART");
@@ -242,12 +222,8 @@ export default function Home() {
           ...prev,
           {
             id: Date.now() + 1,
-            text: "Please provide your phone number so we can contact you:",
+            text: "טלפון ליצירת קשר?",
             sender: "bot",
-            timestamp: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
           },
         ]);
         setConversationState("WAITING_PHONE");
@@ -263,41 +239,20 @@ export default function Home() {
 
       // Confirm the order
       setTimeout(() => {
+        const manufacturer = vehicleObject?.tozeret_nm || "";
+        const model = vehicleObject?.kinuy_mishari || "";
+        const year = vehicleObject?.shnat_yitzur || "";
+
         setMessages((prev) => [
           ...prev,
           {
             id: Date.now() + 1,
-            text: sent
-              ? `✅ Thank you! We have received your request:\n\n📋 Part: ${partRequested}\n📞 Phone: ${userInput}\n\n✉️ Your request has been sent to our sales team via Telegram!\n\nWe will contact you soon!`
-              : `✅ Thank you! We have received your request:\n\n📋 Part: ${partRequested}\n📞 Phone: ${userInput}\n\n📝 Your request has been logged. Please configure Telegram to enable notifications.\n\nWe will contact you soon!`,
+            text: `מצויין!\nאנחנו מחפשים ${partRequested} עבור ${manufacturer}, ${model}, ${year}\n\nההזמנה נשלחה לחנות, ניצור איתך קשר בעשרים דקות הקרובות`,
             sender: "bot",
-            timestamp: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
           },
         ]);
         setConversationState("COMPLETE");
       }, 500);
-
-      // Reset after a few seconds to allow new inquiry
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            text: "Need another part? Enter your plate number:",
-            sender: "bot",
-            timestamp: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          },
-        ]);
-        setConversationState("WAITING_PLATE");
-        setVehicleData(null);
-        setPartRequested("");
-      }, 3000);
     }
   };
 
@@ -310,19 +265,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.avatar}>
-            <div className={styles.avatarIcon}>🤖</div>
-          </div>
-          <div className={styles.headerInfo}>
-            <h2 className={styles.chatName}>Vehicle Info Bot</h2>
-            <span className={styles.status}>Online</span>
-          </div>
-        </div>
-      </div>
-
       {/* Messages Area */}
       <div className={styles.messagesArea}>
         {messages.map((message) => (
@@ -339,7 +281,6 @@ export default function Home() {
               >
                 {message.text}
               </p>
-              <span className={styles.messageTime}>{message.timestamp}</span>
             </div>
           </div>
         ))}
@@ -349,7 +290,6 @@ export default function Home() {
       {/* Input Area */}
       <div className={styles.inputArea}>
         <div className={styles.inputContainer}>
-          <button className={styles.emojiButton}>😊</button>
           <input
             type="text"
             className={styles.input}
@@ -357,11 +297,16 @@ export default function Home() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={conversationState === "COMPLETE"}
           />
           <button
             className={styles.sendButton}
             onClick={handleSend}
-            disabled={inputValue.trim() === "" || isLoading}
+            disabled={
+              inputValue.trim() === "" ||
+              isLoading ||
+              conversationState === "COMPLETE"
+            }
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path

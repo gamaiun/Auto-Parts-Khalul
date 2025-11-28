@@ -4,12 +4,25 @@ import { useState, useEffect, useRef } from "react";
 import styles from "./dashboard.module.css";
 
 export default function Dashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
   const [orders, setOrders] = useState([]);
   const [lastCheckTime, setLastCheckTime] = useState(Date.now());
   const [buttonVisible, setButtonVisible] = useState(true);
   const checkedOrdersRef = useRef(new Set());
   const soundEnabledRef = useRef(false);
   const audioRef = useRef(null);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === "11111") {
+      setIsAuthenticated(true);
+      setPasswordInput("");
+    } else {
+      alert("Incorrect password");
+      setPasswordInput("");
+    }
+  };
 
   const enableSound = async () => {
     // Enable sound by playing a short silent audio (user interaction)
@@ -94,6 +107,8 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     // Request notification permission
     if (Notification.permission === "default") {
       Notification.requestPermission();
@@ -107,7 +122,7 @@ export default function Dashboard() {
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
   const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleString("en-US", {
@@ -117,6 +132,33 @@ export default function Dashboard() {
       minute: "2-digit",
     });
   };
+
+  // Show password form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loginContainer}>
+          <div className={styles.loginBox}>
+            <h1>🔒 Dashboard Access</h1>
+            <p>Enter password to continue</p>
+            <form onSubmit={handlePasswordSubmit}>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter password"
+                className={styles.passwordInput}
+                autoFocus
+              />
+              <button type="submit" className={styles.loginButton}>
+                Access Dashboard
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
