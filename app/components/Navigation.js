@@ -12,8 +12,8 @@ export default function Navigation() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY > 100) {
-        // Past 100px - hide navigation
+      if (currentScrollY > 0) {
+        // Any scroll - hide navigation
         setIsVisible(false);
       } else {
         // At the top - show navigation

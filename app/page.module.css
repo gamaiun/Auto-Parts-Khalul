@@ -135,7 +135,7 @@
 .inputContainer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
 }
 
 .input {
@@ -288,11 +288,11 @@
   }
 
   .messageContent {
-    max-width: 80%;
+    max-width: 90%;
   }
 
   .inputContainer {
-    gap: 8px;
+    gap: 16px;
   }
 
   .input {

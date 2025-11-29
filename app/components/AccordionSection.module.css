@@ -59,7 +59,7 @@
 
 .title {
   flex: 1;
-  font-size: 14px;
+  font-size: 23px;
   color: #192150;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -122,7 +122,7 @@
   }
 
   .title {
-    font-size: 13px;
+    font-size: 17px;
     letter-spacing: 1.2px;
   }
 
