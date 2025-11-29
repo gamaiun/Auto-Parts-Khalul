@@ -54,11 +54,11 @@ export default function Home() {
   const getPlaceholder = () => {
     switch (conversationState) {
       case "WAITING_PLATE":
-        return "הקלד מספר רכב (7-8 ספרות)";
+        return "הקלד מספר רכב";
       case "WAITING_PART":
         return "איזה חלק אתה מחפש?";
       case "WAITING_PHONE":
-        return "הקלד מספר טלפון (05X-XXXXXXX)";
+        return "";
       default:
         return "הקלד הודעה";
     }
