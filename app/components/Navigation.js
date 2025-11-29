@@ -12,11 +12,11 @@ export default function Navigation() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down & past 100px
+      if (currentScrollY > 100) {
+        // Past 100px - hide navigation
         setIsVisible(false);
       } else {
-        // Scrolling up
+        // At the top - show navigation
         setIsVisible(true);
       }
 
