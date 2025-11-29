@@ -71,9 +71,12 @@ export default function Home() {
   const [showCountdown, setShowCountdown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 minutes in seconds
   const messagesEndRef = useRef(null);
+  const messagesAreaRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesAreaRef.current) {
+      messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -427,7 +430,7 @@ export default function Home() {
     <>
       <div className={styles.container}>
         {/* Messages Area */}
-        <div className={styles.messagesArea}>
+        <div className={styles.messagesArea} ref={messagesAreaRef}>
           {messages.map((message) => (
             <div
               key={message.id}
